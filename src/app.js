@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
+const postRoutes = require('./routes/postRoutes');
 
 require('dotenv').config();
 connectDB();
@@ -14,6 +15,7 @@ app.use(cors());
 app.use(helmet());
 app.use(morgan('dev'));
 
-app.use('/api/auth', authRoutes);
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/post', postRoutes);
 
 module.exports = app;
