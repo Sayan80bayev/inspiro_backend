@@ -1,16 +1,53 @@
-version: "3.8"
 services:
   mongodb:
     image: mongo:latest
     container_name: my-mongodb
     restart: always
     ports:
-      - "27017:27017"
+      - '27017:27017'
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: password
     volumes:
       - mongodb_data:/data/db
+    networks:
+      - my_network
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx-load-balancer
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - '80:80'
+    depends_on:
+      - backend1
+      - backend2
+    networks:
+      - my_network
+
+  backend1:
+    image: inspiro-backend
+    container_name: backend1
+    depends_on:
+      - mongodb
+    ports:
+      - '8081:5005'
+    networks:
+      - my_network
+
+  backend2:
+    image: inspiro-backend
+    container_name: backend2
+    depends_on:
+      - mongodb
+    ports:
+      - '8082:5005'
+    networks:
+      - my_network
 
 volumes:
   mongodb_data:
+
+networks:
+  my_network: # ✅ Defines a shared network for all services
