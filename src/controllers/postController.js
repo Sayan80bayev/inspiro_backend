@@ -39,3 +39,16 @@ exports.updatePost = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
+
+exports.deletePost = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty())
+    return res.status(400).json({ errors: errors.array() });
+
+  try {
+    await postService.remove(req);
+    res.status(200).json({ message: 'Post deleted successfully' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
