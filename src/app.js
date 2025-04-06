@@ -16,6 +16,6 @@ app.use(helmet());
 app.use(morgan('dev'));
 
 app.use('/api/v1/auth', authRoutes);
-app.use('/api/v1/post', postRoutes);
+app.use('/api/v1/pin', postRoutes);
 
 module.exports = app;

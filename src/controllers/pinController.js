@@ -1,52 +1,52 @@
 const { validationResult } = require('express-validator');
-const postService = require('../services/postService');
+const ps = require('../services/pinService');
 
-exports.posts = async (req, res) => {
+exports.pins = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty())
     return res.status(400).json({ errors: errors.array() });
 
   try {
-    const posts = await postService.getPosts();
-    res.status(200).json(posts);
+    const pins = await ps.getPins();
+    res.status(200).json(pins);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 };
 
-exports.createPost = async (req, res) => {
+exports.createPin = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty())
     return res.status(400).json({ errors: errors.array() });
 
   try {
-    const post = await postService.create(req);
+    const post = await ps.create(req);
     res.status(201).json(post);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 };
 
-exports.updatePost = async (req, res) => {
+exports.updatePin = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty())
     return res.status(400).json({ errors: errors.array() });
 
   try {
-    const post = await postService.update(req);
-    res.status(201).json(post);
+    const pin = await ps.update(req);
+    res.status(201).json(pin);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 };
 
-exports.deletePost = async (req, res) => {
+exports.deletePin = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty())
     return res.status(400).json({ errors: errors.array() });
 
   try {
-    await postService.remove(req);
+    await ps.remove(req);
     res.status(200).json({ message: 'Post deleted successfully' });
   } catch (error) {
     res.status(400).json({ error: error.message });

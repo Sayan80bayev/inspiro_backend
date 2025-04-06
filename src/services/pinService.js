@@ -1,4 +1,4 @@
-const Post = require('../models/Post');
+const Pin = require('../models/Pin');
 
 const ensureAuthenticated = (user) => {
   if (!user || !user.id) {
@@ -7,51 +7,51 @@ const ensureAuthenticated = (user) => {
   return user.id;
 };
 
-const findPostById = async (post_id) => {
-  const post = await Post.findOne({ _id: post_id });
-  if (!post) {
+const findPinById = async (post_id) => {
+  const pin = await Pin.findOne({ _id: post_id });
+  if (!pin) {
     throw new Error('Post not found');
   }
-  return post;
+  return pin;
 };
 
-const verifyPostOwnership = (post, user_id) => {
+const verifyPinOwnership = (post, user_id) => {
   if (post.user_id.toString() !== user_id.toString()) {
     throw new Error('Unauthorized: User not allowed');
   }
 };
 
-const getPosts = async () => await Post.find();
+const getPins = async () => await Pin.find();
 
 const create = async (req) => {
   const { title, description, file_url } = req.body;
   const user_id = ensureAuthenticated(req.user);
-  return await Post.create({ title, description, file_url, user_id });
+  return await Pin.create({ title, description, file_url, user_id });
 };
 
 const update = async (req) => {
   const { title, description, file_url } = req.body;
-  const post_id = req.params.id;
+  const pin_id = req.params.id;
   const user_id = ensureAuthenticated(req.user);
 
-  const post = await findPostById(post_id);
-  verifyPostOwnership(post, user_id);
+  const pin = await findPinById(pin_id);
+  verifyPinOwnership(pin, user_id);
 
-  return await Post.findByIdAndUpdate(
-    post_id,
+  return await Pin.findByIdAndUpdate(
+    pin_id,
     { title, description, file_url },
     { new: true },
   );
 };
 
 const remove = async (req) => {
-  const post_id = req.params.id;
+  const pin_id = req.params.id;
   const user_id = ensureAuthenticated(req.user);
 
-  const post = await findPostById(post_id);
-  verifyPostOwnership(post, user_id);
+  const pin = await findPinById(pin_id);
+  verifyPinOwnership(pin, user_id);
 
-  return await Post.findByIdAndDelete(post_id);
+  return await Pin.findByIdAndDelete(pin_id);
 };
 
-module.exports = { getPosts, create, update, remove };
+module.exports = { getPins, create, update, remove };
