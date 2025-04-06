@@ -14,6 +14,20 @@ exports.pins = async (req, res) => {
   }
 };
 
+exports.getPinById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const pin = await ps.getPinById(id);
+
+    res.status(200).json({ pin });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: 'Error retrieving pin by id', error: error.message });
+  }
+};
+
 exports.createPin = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty())

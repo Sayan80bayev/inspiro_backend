@@ -1,4 +1,5 @@
 const Pin = require('../models/Pin');
+const Comment = require('../models/Comment');
 
 const ensureAuthenticated = (user) => {
   if (!user || !user.id) {
@@ -22,6 +23,34 @@ const verifyPinOwnership = (post, user_id) => {
 };
 
 const getPins = async () => await Pin.find();
+
+const getPinById = async (pin_id) => {
+  try {
+    const pin = await Pin.findById(pin_id)
+      .populate({
+        path: 'user', // This is the author of the Pin
+        model: 'User',
+        select: 'email', // Only return email of the author
+      })
+      .populate({
+        path: 'comments',
+        model: 'Comment',
+        populate: {
+          path: 'user',
+          model: 'User',
+          select: 'email', // Email of the commenter
+        },
+      });
+
+    if (!pin) {
+      throw new Error('Pin not found');
+    }
+
+    return pin;
+  } catch (error) {
+    throw new Error('Error retrieving pin with comments: ' + error.message);
+  }
+};
 
 const create = async (req) => {
   const { title, description, file_url } = req.body;
@@ -54,4 +83,4 @@ const remove = async (req) => {
   return await Pin.findByIdAndDelete(pin_id);
 };
 
-module.exports = { getPins, create, update, remove };
+module.exports = { getPins, getPinById, create, update, remove };
