@@ -1,5 +1,6 @@
 const Pin = require('../models/Pin');
 const Comment = require('../models/Comment');
+const cache = require('../utils/cache');
 
 const ensureAuthenticated = (user) => {
   if (!user || !user.id) {
@@ -7,30 +8,36 @@ const ensureAuthenticated = (user) => {
   }
   return user.id;
 };
+const getPins = async () => {
+  const cacheKey = 'all_pins';
+  const cachedPins = cache.get(cacheKey);
 
-const findPinById = async (post_id) => {
-  const pin = await Pin.findOne({ _id: post_id });
-  if (!pin) {
-    throw new Error('Post not found');
+  if (cachedPins) {
+    console.log('[CACHE] Serving all pins from cache');
+    return cachedPins;
   }
-  return pin;
-};
 
-const verifyPinOwnership = (post, user_id) => {
-  if (post.user_id.toString() !== user_id.toString()) {
-    throw new Error('Unauthorized: User not allowed');
-  }
+  const pins = await Pin.find();
+  cache.set(cacheKey, pins);
+  console.log('[DB] Fetched all pins from database');
+  return pins;
 };
-
-const getPins = async () => await Pin.find();
 
 const getPinById = async (pin_id) => {
+  const cacheKey = `pin_${pin_id}`;
+  const cachedPin = cache.get(cacheKey);
+
+  if (cachedPin) {
+    console.log(`[CACHE] Serving pin ${pin_id} from cache`);
+    return cachedPin;
+  }
+
   try {
     const pin = await Pin.findById(pin_id)
       .populate({
-        path: 'user', // This is the author of the Pin
+        path: 'user',
         model: 'User',
-        select: 'email', // Only return email of the author
+        select: 'email',
       })
       .populate({
         path: 'comments',
@@ -38,14 +45,14 @@ const getPinById = async (pin_id) => {
         populate: {
           path: 'user',
           model: 'User',
-          select: 'email', // Email of the commenter
+          select: 'email',
         },
       });
 
-    if (!pin) {
-      throw new Error('Pin not found');
-    }
+    if (!pin) throw new Error('Pin not found');
 
+    cache.set(cacheKey, pin);
+    console.log(`[DB] Fetched pin ${pin_id} from database`);
     return pin;
   } catch (error) {
     throw new Error('Error retrieving pin with comments: ' + error.message);
@@ -66,11 +73,17 @@ const update = async (req) => {
   const pin = await findPinById(pin_id);
   verifyPinOwnership(pin, user_id);
 
-  return await Pin.findByIdAndUpdate(
+  const updatedPin = await Pin.findByIdAndUpdate(
     pin_id,
     { title, description, file_url },
     { new: true },
   );
+
+  // Invalidate caches
+  cache.del(`pin_${pin_id}`);
+  cache.del('all_pins');
+
+  return updatedPin;
 };
 
 const remove = async (req) => {
@@ -80,7 +93,13 @@ const remove = async (req) => {
   const pin = await findPinById(pin_id);
   verifyPinOwnership(pin, user_id);
 
-  return await Pin.findByIdAndDelete(pin_id);
+  const deletedPin = await Pin.findByIdAndDelete(pin_id);
+
+  // Invalidate caches
+  cache.del(`pin_${pin_id}`);
+  cache.del('all_pins');
+
+  return deletedPin;
 };
 
 module.exports = { getPins, getPinById, create, update, remove };
