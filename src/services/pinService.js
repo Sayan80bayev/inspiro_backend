@@ -8,18 +8,34 @@ const ensureAuthenticated = (user) => {
   }
   return user.id;
 };
-const getPins = async () => {
-  const cacheKey = 'all_pins';
+
+const getPins = async (sortOrder = 'newest') => {
+  const cacheKey = `all_pins_${sortOrder}`;
   const cachedPins = cache.get(cacheKey);
 
   if (cachedPins) {
-    console.log('[CACHE] Serving all pins from cache');
+    console.log(`[CACHE] Serving all pins (${sortOrder}) from cache`);
     return cachedPins;
   }
 
-  const pins = await Pin.find();
+  // Определяем направление сортировки
+  const sortDirection = sortOrder === 'oldest' ? 1 : -1; // 1 для старых, -1 для новых
+
+  const pins = await Pin.aggregate([
+    { $sort: { createdAt: sortDirection } },
+    {
+      $lookup: {
+        from: 'users', // Пуллим юзера
+        localField: 'user_id',
+        foreignField: '_id',
+        as: 'user',
+      },
+    },
+    { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } }, // user в объект, даже если его нет
+  ]);
+
   cache.set(cacheKey, pins);
-  console.log('[DB] Fetched all pins from database');
+  console.log(`[DB] Fetched all pins (${sortOrder}) from database`);
   return pins;
 };
 
@@ -81,7 +97,8 @@ const update = async (req) => {
 
   // Invalidate caches
   cache.del(`pin_${pin_id}`);
-  cache.del('all_pins');
+  cache.del('all_pins_newest');
+  cache.del('all_pins_oldest');
 
   return updatedPin;
 };
@@ -97,7 +114,8 @@ const remove = async (req) => {
 
   // Invalidate caches
   cache.del(`pin_${pin_id}`);
-  cache.del('all_pins');
+  cache.del('all_pins_newest');
+  cache.del('all_pins_oldest');
 
   return deletedPin;
 };

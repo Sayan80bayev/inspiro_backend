@@ -7,7 +7,8 @@ exports.pins = async (req, res) => {
     return res.status(400).json({ errors: errors.array() });
 
   try {
-    const pins = await ps.getPins();
+    const sortOrder = req.query.sort || 'newest';
+    const pins = await ps.getPins(sortOrder);
     res.status(200).json(pins);
   } catch (error) {
     res.status(400).json({ error: error.message });
