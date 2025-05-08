@@ -12,7 +12,13 @@ services:
       - mongodb_data:/data/db
     networks:
       - my_network
-
+  redis:
+    image: redis:latest
+    container_name: redis-cache
+    ports:
+      - '6379:6379'
+    networks:
+      - my_network
   nginx:
     image: nginx:latest
     container_name: nginx-load-balancer
@@ -31,6 +37,7 @@ services:
     container_name: backend1
     depends_on:
       - mongodb
+      - redis
     ports:
       - '8081:5005'
     networks:
@@ -41,6 +48,7 @@ services:
     container_name: backend2
     depends_on:
       - mongodb
+      - redis
     ports:
       - '8082:5005'
     networks:
