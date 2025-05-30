@@ -1,4 +1,13 @@
 services:
+  inspiro:
+    build:
+      context: /Users/sayanseksenbaev/Programming/inspiro
+      dockerfile: Dockerfile
+    container_name: inspiro-frontend
+    ports:
+      - '5173:5173'
+    networks:
+      - my_network
   mongodb:
     image: mongo:latest
     container_name: my-mongodb
